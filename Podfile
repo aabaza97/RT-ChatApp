@@ -11,5 +11,11 @@ pod 'Firebase/Core'
 pod 'Firebase/Firestore'
 pod 'Firebase/Auth'
 pod 'FirebaseFirestoreSwift'
+pod 'MessageKit'
+pod 'JGProgressHUD'
+pod 'RealmSwift'
+pod 'SDWebImage'
+
+
 
 end

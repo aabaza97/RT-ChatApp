@@ -7,3 +7,9 @@
 //
 
 import Foundation
+
+struct N {
+    struct DefKeys {
+        static let isLoggedIn: String = "is_loggedIn"
+    }
+}
