@@ -208,20 +208,17 @@ class RegisterViewController: UIViewController {
         //Firebase Registration
         showSpinner(indicator: "Loading", loadingText: "Signing Up...")
         
-        DbManager.shared.userExists(with: email) { [weak self] (result) in
+        DbManager.shared.doesUserExist(with: email) { [weak self] (result) in
             guard let strongSelf = self else {
                 return
             }
-            guard !result else {
+            
+            guard result else {
                 strongSelf.alertUser(message: "User is already Registered!")
                 return
             }
             
-            FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password) {(res, error) in
-               
-                DispatchQueue.main.async {
-                    strongSelf.spinner.dismiss(afterDelay: 0.5, animated: true)
-                }
+            FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password) {(result, error) in
                 
                 if let err = error {
                     strongSelf.spinner.indicatorView = JGProgressHUDErrorIndicatorView()
@@ -229,13 +226,53 @@ class RegisterViewController: UIViewController {
                     print(err)
                     return
                 } else {
+                    
                     strongSelf.spinner.indicatorView = JGProgressHUDSuccessIndicatorView()
                     strongSelf.spinner.textLabel.text = "Success"
-                    DbManager.shared.createUser(from: User(username: username, email: email))
+                    
+                    guard let res = result else {
+                        return
+                    }
+                    
+                    
+                    let user = User(userId: res.user.uid, username: username, email: email)
+                    
+                    DbManager.shared.createUser(from: user) { (result) in
+                        if result {
+                           
+                            guard let image = strongSelf.imageView.image,
+                                let data = image.pngData() else {
+                                return
+                            }
+                            
+                            let filepath = user.profilePictureFilePath
+                            
+                            StorageManager.shared.uploadImage(with: data, to: K.Dirs.imageDir, fileName: filepath) { (result) in
+                                switch result {
+                                case .success(let downloadURL):
+                                    UserDefaults.standard.set(downloadURL, forKey: "profile_picture_url")
+                                    print(downloadURL)
+                                    break
+                                case .failure(let err):
+                                    print("Storage Manager Error: \(err)")
+                                    break
+                                }
+                            }
+                            
+                        } else {
+                            
+                        }
+                    }
+                    
                     Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { (t) in
                         strongSelf.navigationController?.dismiss(animated: true, completion: nil)
                     }
                 }
+                
+                DispatchQueue.main.async {
+                    strongSelf.spinner.dismiss(afterDelay: 0.5, animated: true)
+                }
+                
             }
         }
         

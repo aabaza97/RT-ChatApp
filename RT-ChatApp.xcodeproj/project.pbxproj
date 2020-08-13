@@ -26,6 +26,9 @@
 		BBA05C7224DF968900701D8D /* DBManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA05C7124DF968900701D8D /* DBManager.swift */; };
 		BBB94BE224E300730060E6F0 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB94BE124E300730060E6F0 /* SettingsViewController.swift */; };
 		BBB94BE424E365930060E6F0 /* NewConversationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB94BE324E365930060E6F0 /* NewConversationViewController.swift */; };
+		BBB94BE624E47EF20060E6F0 /* StorageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB94BE524E47EF20060E6F0 /* StorageManager.swift */; };
+		BBB94BE824E4C28B0060E6F0 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB94BE724E4C28B0060E6F0 /* User.swift */; };
+		BBB94BEA24E4C9480060E6F0 /* Consts.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB94BE924E4C9480060E6F0 /* Consts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +53,9 @@
 		BBA05C7124DF968900701D8D /* DBManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DBManager.swift; sourceTree = "<group>"; };
 		BBB94BE124E300730060E6F0 /* SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		BBB94BE324E365930060E6F0 /* NewConversationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewConversationViewController.swift; sourceTree = "<group>"; };
+		BBB94BE524E47EF20060E6F0 /* StorageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageManager.swift; sourceTree = "<group>"; };
+		BBB94BE724E4C28B0060E6F0 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		BBB94BE924E4C9480060E6F0 /* Consts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Consts.swift; sourceTree = "<group>"; };
 		CEEC9CA70ACDDE283EE39415 /* Pods-RT-ChatApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RT-ChatApp.debug.xcconfig"; path = "Target Support Files/Pods-RT-ChatApp/Pods-RT-ChatApp.debug.xcconfig"; sourceTree = "<group>"; };
 		E515C814213044EC475C10D0 /* Pods-RT-ChatApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RT-ChatApp.release.xcconfig"; path = "Target Support Files/Pods-RT-ChatApp/Pods-RT-ChatApp.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -154,6 +160,9 @@
 				BBA05C4524DF0F2000701D8D /* AppDelegate.swift */,
 				BBA05C4724DF0F2000701D8D /* SceneDelegate.swift */,
 				BBA05C7124DF968900701D8D /* DBManager.swift */,
+				BBB94BE524E47EF20060E6F0 /* StorageManager.swift */,
+				BBB94BE724E4C28B0060E6F0 /* User.swift */,
+				BBB94BE924E4C9480060E6F0 /* Consts.swift */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -287,6 +296,8 @@
 				BBA05C6224DF123100701D8D /* RegisterViewController.swift in Sources */,
 				BBA05C5024DF0F2000701D8D /* RT_ChatApp.xcdatamodeld in Sources */,
 				BBA05C6624DF125300701D8D /* ChatViewController.swift in Sources */,
+				BBB94BE824E4C28B0060E6F0 /* User.swift in Sources */,
+				BBB94BEA24E4C9480060E6F0 /* Consts.swift in Sources */,
 				BBA05C6424DF124700701D8D /* ConversationsViewController.swift in Sources */,
 				BBA05C6C24DF139000701D8D /* Constants.swift in Sources */,
 				BBA05C6824DF126900701D8D /* PhotoViewerViewController.swift in Sources */,
@@ -295,6 +306,7 @@
 				BBA05C6A24DF127400701D8D /* VideoViewerViewController.swift in Sources */,
 				BBA05C4624DF0F2000701D8D /* AppDelegate.swift in Sources */,
 				BBB94BE224E300730060E6F0 /* SettingsViewController.swift in Sources */,
+				BBB94BE624E47EF20060E6F0 /* StorageManager.swift in Sources */,
 				BBA05C6E24DF5F2500701D8D /* Extensions.swift in Sources */,
 				BBA05C4824DF0F2000701D8D /* SceneDelegate.swift in Sources */,
 			);

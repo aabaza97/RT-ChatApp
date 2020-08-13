@@ -6,11 +6,15 @@ target 'RT-ChatApp' do
   use_frameworks!
 
   # Pods for RT-ChatApp
+#Firebase
 pod 'Firebase/Analytics'
 pod 'Firebase/Core'
 pod 'Firebase/Firestore'
 pod 'Firebase/Auth'
 pod 'FirebaseFirestoreSwift'
+pod 'Firebase/Storage'
+
+#Others
 pod 'MessageKit'
 pod 'JGProgressHUD'
 pod 'RealmSwift'

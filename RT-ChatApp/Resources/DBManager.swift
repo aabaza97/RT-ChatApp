@@ -22,8 +22,8 @@ final class DbManager {
 //MARK: -User Manager
 extension DbManager {
     
-    ///Checks if user registered with email address
-    func userExists(with email: String, completion: @escaping ((Bool) -> Void)) {
+    ///Checks if a user is previously registered with email address
+    func doesUserExist(with email: String, completion: @escaping ((Bool) -> Void)) {
         db.collection("users").whereField("email", isEqualTo: email).getDocuments { (snapshot, error) in
             guard let _ = snapshot else {
                 completion(false)
@@ -33,11 +33,19 @@ extension DbManager {
         }
     }
     
-    /// Inserts new user to database
-    public func createUser(from user: User){
-        let docRef = db.collection("users").document()
+    ///Inserts new user to database. CompletionHandler returns true on success & false on failure.
+    public func createUser(from user: User, completion: @escaping (Bool) -> Void){
+        let docRef = db.collection("users").document(user.userId)
         do {
-            try docRef.setData(from: user)
+            try docRef.setData(from: user, completion: { error in
+                guard error == nil else {
+                    print("failed to create user")
+                    completion(false)
+                    return
+                }
+                
+                completion(true)
+            })
         } catch let err {
             print(err)
         }
@@ -50,8 +58,3 @@ extension DbManager {
     
 }
 
-struct User: Codable {
-    let username: String
-    let email: String
-   
-}
