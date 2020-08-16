@@ -51,9 +51,55 @@ class SettingsViewController: UIViewController {
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
         tableView.dataSource = self
         tableView.delegate = self
-        
+        tableView.tableHeaderView = configureHeader()
     }
     
+    
+    private func configureHeader() -> UIView? {
+        guard let email = UserDefaults.standard.string(forKey: "email") else {
+            return nil
+        }
+        let filename = DbManager.shared.getProfilePictureFileName(from: email)
+        let path = N.Dirs.imageDir + filename
+        
+        //View
+        let headerView = UIView(frame: CGRect(x: 0, y: 0, width: self.view.width, height: 300))
+        headerView.backgroundColor = .lightGray
+        
+        //ImageView
+        let imageView = UIImageView(frame: CGRect(x: (headerView.width - 150) / 2, y: 75, width: 150, height: 150))
+        imageView.contentMode = .scaleAspectFill
+        imageView.layer.borderColor = UIColor.white.cgColor
+        imageView.layer.borderWidth = 2
+        imageView.layer.cornerRadius = imageView.width / 2
+        imageView.layer.masksToBounds = true
+        
+        headerView.addSubview(imageView)
+        
+        StorageManager.shared.downloadURL(for: path) { (result) in
+            switch result{
+            case .failure(let err):
+                print(err)
+                break
+            case .success(let url):
+                self.downloadImage(imageView: imageView, url: url)
+            }
+        }
+        
+        return headerView
+    }
+    
+    private func downloadImage(imageView: UIImageView, url: URL) -> Void {
+        URLSession.shared.dataTask(with: url) { (data, _, err) in
+            guard let data = data, err == nil else {
+                return
+            }
+            DispatchQueue.main.async {
+                let image = UIImage(data: data)
+                imageView.image = image
+            }
+        }.resume()
+    }
     
     private func launchLogin(withAnimation animated: Bool = false) -> Void {
         let vc = LoginViewController()

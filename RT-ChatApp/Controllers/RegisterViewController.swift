@@ -226,7 +226,7 @@ class RegisterViewController: UIViewController {
                     print(err)
                     return
                 } else {
-                    
+                    UserDefaults.standard.set(email, forKey: "email")
                     strongSelf.spinner.indicatorView = JGProgressHUDSuccessIndicatorView()
                     strongSelf.spinner.textLabel.text = "Success"
                     
@@ -247,7 +247,7 @@ class RegisterViewController: UIViewController {
                             
                             let filepath = user.profilePictureFilePath
                             
-                            StorageManager.shared.uploadImage(with: data, to: K.Dirs.imageDir, fileName: filepath) { (result) in
+                            StorageManager.shared.uploadImage(with: data, to: N.Dirs.imageDir, fileName: filepath) { (result) in
                                 switch result {
                                 case .success(let downloadURL):
                                     UserDefaults.standard.set(downloadURL, forKey: "profile_picture_url")

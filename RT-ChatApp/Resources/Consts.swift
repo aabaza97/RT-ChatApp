@@ -7,9 +7,3 @@
 //
 
 import Foundation
-
-struct K {
-    struct Dirs {
-        static let imageDir: String = "images/"
-    }
-}

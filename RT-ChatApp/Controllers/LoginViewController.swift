@@ -224,6 +224,7 @@ class LoginViewController: UIViewController {
                 print(err)
                 return
             } else {
+                UserDefaults.standard.set(email, forKey: "email")
                 strongSelf.spinner.indicatorView = JGProgressHUDSuccessIndicatorView()
                 strongSelf.spinner.textLabel.text = "Success"
                 Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { (t) in

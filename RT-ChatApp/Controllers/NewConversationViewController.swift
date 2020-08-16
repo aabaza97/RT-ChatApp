@@ -36,9 +36,21 @@ class NewConversationViewController: UIViewController {
         return lbl
     }()
     
+    private let spinner: JGProgressHUD = {
+        let spinner = JGProgressHUD(style: .dark)
+        spinner.indicatorView = JGProgressHUDIndeterminateIndicatorView()
+        return spinner
+    }()
+    
+    
+    
     
     //MARK: -Properties
-
+    private var users = [User]()
+    private var results = [User]()
+    private var hasFetched = false
+    
+    
     
     //MARK: -Overrides
     override func viewDidLoad() {
@@ -46,6 +58,12 @@ class NewConversationViewController: UIViewController {
         configureViewController()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        configureSubViews()
+    }
+    
+    
     
     
     //MARK: -Functions
@@ -58,13 +76,32 @@ class NewConversationViewController: UIViewController {
         navigationController?.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Cancel", style: .done, target: UIViewController.self, action: #selector(dismissSelf))
         
         //focus searchBar
-        searchBar.becomeFirstResponder()
+        //searchBar.becomeFirstResponder()
         
+        
+        //Add Subviews
+        addSubViews()
+        
+        //Fetch Data
+        fetchUsers()
     }
     
-    private func configureViews(){
+    private func configureSubViews(){
         //Search Bar
         searchBar.delegate = self
+        
+        //TableView
+        tableView.delegate = self
+        tableView.dataSource = self
+        tableView.frame = view.bounds
+        
+        //NO results Lable
+        lblNoResults.frame = CGRect(x: view.width / 4, y: (view.height - 200) / 2, width: (view.width) / 2 , height: 200)
+    }
+    
+    private func addSubViews(){
+        view.addSubview(lblNoResults)
+        view.addSubview(tableView)
     }
     
     //MARK: -OBJC Functions
@@ -76,8 +113,106 @@ class NewConversationViewController: UIViewController {
 }
 
 
+//MARK: -TableView Extension
+
+extension NewConversationViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return results.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text = results[indexPath.row].username
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+}
+
+
+
+//MARK: -Search Extension
 extension NewConversationViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        guard let searchtext = searchBar.text, !searchtext.replacingOccurrences(of: " ", with: "").isEmpty else {
+            return
+        }
+        
+        //Dismiss Keyboard
+        searchBar.resignFirstResponder()
+        
+        //Clear Previous Results
+        results.removeAll()
+        
+        //Show Spinner
+        spinner.show(in: view)
+        
+        //Search the query
+        searchUsers(query: searchtext)
         
     }
+    
+    func toggleHasFetched() {
+        hasFetched = !hasFetched
+    }
+    
+    func searchUsers(query: String) -> Void {
+        if hasFetched {
+            filterUsers(with: query)
+        } else {
+            fetchUsers(withFilter: true, query: query)
+        }
+    }
+    
+    func fetchUsers(withFilter: Bool = false, query: String? = nil) {
+        DbManager.shared.fetchAllUsers { [weak self](result) in
+            guard let strongSelf = self else {
+                return
+            }
+            
+            switch result{
+            case .success(let usersData):
+                strongSelf.users = usersData
+                strongSelf.toggleHasFetched()
+                if withFilter {
+                    strongSelf.filterUsers(with: query!)
+                }
+                break
+            case.failure(let err):
+                print(err)
+                break
+            }
+            
+        }
+    }
+    
+    func filterUsers(with needle: String) -> Void {
+        
+        
+        let results: [User] = self.users.filter ({ user in
+            let name = user.username.lowercased()
+            
+            return name.contains(needle.lowercased())
+        })
+        
+        self.results = results
+        
+        updateUI()
+    }
+    
+    
+    func updateUI() {
+        self.spinner.dismiss()
+        if results.isEmpty {
+            self.lblNoResults.isHidden = false
+            self.tableView.isHidden = true
+        } else {
+            self.lblNoResults.isHidden = true
+            self.tableView.isHidden = false
+            self.tableView.reloadData()
+        }
+    }
+    
 }

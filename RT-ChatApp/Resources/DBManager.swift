@@ -16,6 +16,11 @@ final class DbManager {
     static let shared = DbManager()
     private let db = Firestore.firestore()
     
+    public typealias fetchUsersCompletionHandler = (Result<[User], Error>) -> Void
+    
+    public enum DBManagerErrors: Error{
+        case FailedToFetchUsers
+    }
 }
 
 
@@ -48,6 +53,30 @@ extension DbManager {
             })
         } catch let err {
             print(err)
+        }
+    }
+    public func getProfilePictureFileName(from email: String) -> String {
+        return "profile_pirctures/\(email).png"
+    }
+    
+    ///Completion: Array of User Objects
+    public func fetchAllUsers(completion: @escaping fetchUsersCompletionHandler) {
+        let colRef = db.collection("users")
+        colRef.getDocuments { (snapshot, error) in
+            guard let docs = snapshot?.documents, error == nil else {
+                completion(.failure(DBManagerErrors.FailedToFetchUsers))
+                return
+            }
+            
+            var users = [User]()
+            
+            for doc in docs {
+                let data = doc.data()
+                let user = User(userId: data["userId"] as! String, username: data["username"] as! String, email: data["email"] as! String)
+                users.append(user)
+            }
+            
+            completion(.success(users))
         }
     }
 }

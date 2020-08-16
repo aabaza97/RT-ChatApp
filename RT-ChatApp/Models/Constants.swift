@@ -12,4 +12,8 @@ struct N {
     struct DefKeys {
         static let isLoggedIn: String = "is_loggedIn"
     }
+    
+    struct Dirs {
+        static let imageDir: String = "images/"
+    }
 }
