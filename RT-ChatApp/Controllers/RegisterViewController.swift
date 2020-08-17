@@ -230,16 +230,17 @@ class RegisterViewController: UIViewController {
                     strongSelf.spinner.indicatorView = JGProgressHUDSuccessIndicatorView()
                     strongSelf.spinner.textLabel.text = "Success"
                     
-                    guard let res = result else {
+                    guard let result = result else {
                         return
                     }
                     
                     
-                    let user = User(userId: res.user.uid, username: username, email: email)
+                    let user = User(userId: result.user.uid, username: username, email: email)
+                    UserDefaults.standard.set(email, forKey: "email")
+                    UserDefaults.standard.set(result.user.uid, forKey: "userId")
                     
                     DbManager.shared.createUser(from: user) { (result) in
                         if result {
-                           
                             guard let image = strongSelf.imageView.image,
                                 let data = image.pngData() else {
                                 return
@@ -248,6 +249,14 @@ class RegisterViewController: UIViewController {
                             let filepath = user.profilePictureFilePath
                             
                             StorageManager.shared.uploadImage(with: data, to: N.Dirs.imageDir, fileName: filepath) { (result) in
+                                
+                                DispatchQueue.main.async {
+                                    strongSelf.spinner.dismiss(afterDelay: 0.5, animated: true)
+                                    Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { (t) in
+                                        strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+                                    }
+                                }
+                                
                                 switch result {
                                 case .success(let downloadURL):
                                     UserDefaults.standard.set(downloadURL, forKey: "profile_picture_url")
@@ -264,14 +273,8 @@ class RegisterViewController: UIViewController {
                         }
                     }
                     
-                    Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { (t) in
-                        strongSelf.navigationController?.dismiss(animated: true, completion: nil)
-                    }
                 }
                 
-                DispatchQueue.main.async {
-                    strongSelf.spinner.dismiss(afterDelay: 0.5, animated: true)
-                }
                 
             }
         }

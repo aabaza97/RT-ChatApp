@@ -14,7 +14,7 @@ import JGProgressHUD
 class ConversationsViewController: UIViewController {
 
     //MARK: -Properties
-    
+    var appUser: User!
     
     
     //MARK: -Interface Elements
@@ -36,22 +36,12 @@ class ConversationsViewController: UIViewController {
         label.isHidden = true
         return label
     }()
-    private let btnLogout: UIButton = {
-        let btn = UIButton()
-        btn.setTitle("LogOut", for: .normal)
-        btn.isUserInteractionEnabled = true
-        return btn
-    }()
     
     
     
     //MARK: -Overrides
     override func viewDidLoad() {
         super.viewDidLoad()
-//        view.backgroundColor = .red
-//        view.addSubview(btnLogout)
-//        btnLogout.frame = CGRect(x: 30, y: 20, width: 100, height: 50)
-//        btnLogout.addTarget(self, action: #selector(logOut), for: .touchUpInside)
         
         configureViewController()
     }
@@ -63,7 +53,8 @@ class ConversationsViewController: UIViewController {
         if !isLoggedIn() {
             launchLogin()
         } else {
-            //TODO: load my converstaions
+            // get user
+            // load conversations
         }
     }
     
@@ -78,6 +69,7 @@ class ConversationsViewController: UIViewController {
     
     @IBAction func composeMessageTapped(_ sender: UIBarButtonItem) {
         let vc = NewConversationViewController()
+        vc.conversationDelegate = self
         let navVC = UINavigationController(rootViewController: vc)
         present(navVC,animated: true)
     }
@@ -85,6 +77,22 @@ class ConversationsViewController: UIViewController {
     //MARK: -Functions
     private func isLoggedIn() -> Bool {
         if FirebaseAuth.Auth.auth().currentUser == nil {
+            return false
+        }
+        
+        let appUserId = UserDefaults.standard.value(forKey: "userId") as? String
+        if let appUserId = appUserId {
+            DbManager.shared.getUser(from: appUserId) { [weak self] (result) in
+                switch result {
+                case .success(let user):
+                    self?.appUser = user
+                    break
+                case .failure(_):
+                    self?.launchLogin()
+                    break
+                }
+            }
+        } else {
             return false
         }
         return true
@@ -124,23 +132,24 @@ class ConversationsViewController: UIViewController {
     }
     
     
-    private func openChat(title: String) {
+    private func openChat(user: User? = nil, stateOf newConversation: Bool = false) {
+        guard let user = user else {
+            return
+        }
+        
         let vc = ChatViewController()
-        vc.title = title
-        vc.view.backgroundColor = .red
+        vc.title = user.username
+        vc.otherUser = user
+        vc.appUser = appUser
+        vc.isNewConversation = newConversation
+        vc.view.backgroundColor = .white
         self.navigationController?.pushViewController(vc, animated: true)
     }
     
     
     //MARK: -Objc Functions
-    @objc private func logOut(){
-        do {
-            try FirebaseAuth.Auth.auth().signOut()
-            launchLogin()
-        } catch let err {
-            print(err)
-        }
-    }
+    
+    
 }
 
 
@@ -159,9 +168,28 @@ extension ConversationsViewController: UITableViewDelegate, UITableViewDataSourc
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        guard let title = tableView.cellForRow(at: indexPath)?.textLabel?.text else {
-            return
-        }
-        openChat(title: title)
+        
+        let dummyUser = User(userId: "id", username: "username", email: "email@mail.com")
+        openChat(user: dummyUser)
     }
+}
+
+
+extension ConversationsViewController: ConversationDelegate {
+    func newConversation(user: User) {
+        /*
+         check if conversation exists?
+         - if true --- pass isNewConversation = true
+         - if false --- pass false
+         */
+        
+        var conversationMembers = [User]()
+        conversationMembers.append(user)
+        conversationMembers.append(appUser)
+        DbManager.shared.doesConversationExist(between: conversationMembers) { [weak self] (exists) in
+                self?.openChat(user: user, stateOf: !exists)
+        }
+    }
+    
+    
 }

@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		91E87D0CE5479E7267202C0E /* Pods_RT_ChatApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 17FBA6103E70EF541FCF6C1A /* Pods_RT_ChatApp.framework */; };
+		BB17B17A24E96DDC00109968 /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB17B17924E96DDC00109968 /* Protocols.swift */; };
+		BB17B17C24E9812400109968 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB17B17B24E9812400109968 /* Conversation.swift */; };
 		BBA05C4624DF0F2000701D8D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA05C4524DF0F2000701D8D /* AppDelegate.swift */; };
 		BBA05C4824DF0F2000701D8D /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA05C4724DF0F2000701D8D /* SceneDelegate.swift */; };
 		BBA05C4A24DF0F2000701D8D /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA05C4924DF0F2000701D8D /* LoginViewController.swift */; };
@@ -33,6 +35,8 @@
 
 /* Begin PBXFileReference section */
 		17FBA6103E70EF541FCF6C1A /* Pods_RT_ChatApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RT_ChatApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB17B17924E96DDC00109968 /* Protocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		BB17B17B24E9812400109968 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
 		BBA05C4224DF0F2000701D8D /* RT-ChatApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "RT-ChatApp.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BBA05C4524DF0F2000701D8D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBA05C4724DF0F2000701D8D /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -158,11 +162,13 @@
 			isa = PBXGroup;
 			children = (
 				BBA05C4524DF0F2000701D8D /* AppDelegate.swift */,
+				BBB94BE724E4C28B0060E6F0 /* User.swift */,
+				BB17B17B24E9812400109968 /* Conversation.swift */,
 				BBA05C4724DF0F2000701D8D /* SceneDelegate.swift */,
 				BBA05C7124DF968900701D8D /* DBManager.swift */,
 				BBB94BE524E47EF20060E6F0 /* StorageManager.swift */,
-				BBB94BE724E4C28B0060E6F0 /* User.swift */,
 				BBB94BE924E4C9480060E6F0 /* Consts.swift */,
+				BB17B17924E96DDC00109968 /* Protocols.swift */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -295,12 +301,14 @@
 				BBA05C4A24DF0F2000701D8D /* LoginViewController.swift in Sources */,
 				BBA05C6224DF123100701D8D /* RegisterViewController.swift in Sources */,
 				BBA05C5024DF0F2000701D8D /* RT_ChatApp.xcdatamodeld in Sources */,
+				BB17B17A24E96DDC00109968 /* Protocols.swift in Sources */,
 				BBA05C6624DF125300701D8D /* ChatViewController.swift in Sources */,
 				BBB94BE824E4C28B0060E6F0 /* User.swift in Sources */,
 				BBB94BEA24E4C9480060E6F0 /* Consts.swift in Sources */,
 				BBA05C6424DF124700701D8D /* ConversationsViewController.swift in Sources */,
 				BBA05C6C24DF139000701D8D /* Constants.swift in Sources */,
 				BBA05C6824DF126900701D8D /* PhotoViewerViewController.swift in Sources */,
+				BB17B17C24E9812400109968 /* Conversation.swift in Sources */,
 				BBA05C7224DF968900701D8D /* DBManager.swift in Sources */,
 				BBB94BE424E365930060E6F0 /* NewConversationViewController.swift in Sources */,
 				BBA05C6A24DF127400701D8D /* VideoViewerViewController.swift in Sources */,

@@ -12,6 +12,15 @@ import JGProgressHUD
 
 class NewConversationViewController: UIViewController {
     
+    
+    //MARK: -Properties
+    private var users = [User]()
+    private var results = [User]()
+    private var hasFetched = false
+    
+    public var conversationDelegate: ConversationDelegate!
+    
+    
     //MARK: -Interface Elements
     private let searchBar: UISearchBar = {
         let bar = UISearchBar()
@@ -43,15 +52,7 @@ class NewConversationViewController: UIViewController {
     }()
     
     
-    
-    
-    //MARK: -Properties
-    private var users = [User]()
-    private var results = [User]()
-    private var hasFetched = false
-    
-    
-    
+  
     //MARK: -Overrides
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -72,11 +73,11 @@ class NewConversationViewController: UIViewController {
         view.backgroundColor = .white
         
         //setting top item to search bar
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Cancel", style: .done, target: self, action: #selector(dismissSelf))
         navigationController?.navigationBar.topItem?.titleView = searchBar
-        navigationController?.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Cancel", style: .done, target: UIViewController.self, action: #selector(dismissSelf))
         
         //focus searchBar
-        //searchBar.becomeFirstResponder()
+        searchBar.becomeFirstResponder()
         
         
         //Add Subviews
@@ -87,6 +88,8 @@ class NewConversationViewController: UIViewController {
     }
     
     private func configureSubViews(){
+//        navigationController?.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Cancel", style: .done, target: UIViewController.self, action: #selector(dismissSelf))
+        
         //Search Bar
         searchBar.delegate = self
         
@@ -114,7 +117,6 @@ class NewConversationViewController: UIViewController {
 
 
 //MARK: -TableView Extension
-
 extension NewConversationViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return results.count
@@ -128,6 +130,10 @@ extension NewConversationViewController: UITableViewDelegate, UITableViewDataSou
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
+        let selectedUser = results[indexPath.row]
+        self.dismiss(animated: true) {
+            self.conversationDelegate.newConversation(user: selectedUser)
+        }
     }
 }
 
@@ -198,6 +204,13 @@ extension NewConversationViewController: UISearchBarDelegate {
         })
         
         self.results = results
+        let selfUser = self.results.firstIndex { (user) -> Bool in
+            return user.email == UserDefaults.standard.value(forKey: "email") as! String
+        }
+        
+        if selfUser != nil {
+            self.results.remove(at: selfUser!)
+        }
         
         updateUI()
     }

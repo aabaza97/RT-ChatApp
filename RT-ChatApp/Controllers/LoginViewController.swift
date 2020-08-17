@@ -217,19 +217,21 @@ class LoginViewController: UIViewController {
             DispatchQueue.main.async {
                 strongSelf.spinner.dismiss(afterDelay: 0.5, animated: true)
             }
+
             
-            if let err = error {
-                strongSelf.spinner.indicatorView = JGProgressHUDErrorIndicatorView()
-                strongSelf.spinner.textLabel.text = "Failed!"
-                print(err)
-                return
-            } else {
+            if let result = res {
                 UserDefaults.standard.set(email, forKey: "email")
+                UserDefaults.standard.set(result.user.uid, forKey: "userId")
                 strongSelf.spinner.indicatorView = JGProgressHUDSuccessIndicatorView()
                 strongSelf.spinner.textLabel.text = "Success"
                 Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { (t) in
                     strongSelf.navigationController?.dismiss(animated: true, completion: nil)
                 }
+                
+            } else {
+                strongSelf.spinner.indicatorView = JGProgressHUDErrorIndicatorView()
+                strongSelf.spinner.textLabel.text = "Failed!"
+                return
             }
             
             
