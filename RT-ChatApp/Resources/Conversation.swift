@@ -11,22 +11,28 @@ import FirebaseFirestore
 
 class Conversation: Codable {
     var conversationId: String
-    let betweenUsers: [String]
-    let combinedUsers: [String]
-    let latestMessage: DocumentReference?
+    let betweenUsers: [String] // users Ids
+    let combinedUsers: [String] // combined users Ids
+    let usersData: [User]
+    let latestMessageRef: DocumentReference?
+    let latestMessageContent: String
     
-    init(id: String, users: [String], message: DocumentReference, idsCombination: [String]) {
+    init(id: String, users: [String], message: DocumentReference, idsCombination: [String], usersData: [User], messageContent: String) {
         self.conversationId = id
         self.betweenUsers = users
-        self.latestMessage = message
+        self.latestMessageRef = message
         self.combinedUsers = idsCombination
+        self.usersData = usersData
+        self.latestMessageContent = messageContent
     }
     
-    init(id: String, users: [String], idsCombination: [String]) {
+    init(id: String, users: [String], idsCombination: [String], usersData: [User], messageContent: String) {
         self.conversationId = id
         self.betweenUsers = users
-        self.latestMessage = nil
+        self.latestMessageRef = nil
         self.combinedUsers = idsCombination
+        self.usersData = usersData
+        self.latestMessageContent = messageContent
     }
 }
 
@@ -40,7 +46,7 @@ class CMessage: Codable {
     private let date: Date
     private let isRead: Bool
     private let type: String
-    private let messageContent: String
+    private let messageContent: String // if text stores the text, if others stores the url
     
     init(id: String, conversationId: String, senderId: String, receiverId: String, date: Date, isRead: Bool = false, type: String, content: String) {
         self.messageId = id
@@ -62,6 +68,14 @@ class CMessage: Codable {
     }
     
     func getMessageId() -> String {
-        return messageId
+        return self.messageId
+    }
+    
+    func getConversationId() -> String {
+        return self.conversationId
+    }
+    
+    func getMessageContent() -> String{
+        return self.messageContent
     }
 }

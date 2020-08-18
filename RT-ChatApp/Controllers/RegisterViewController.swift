@@ -249,7 +249,6 @@ class RegisterViewController: UIViewController {
                             let filepath = user.profilePictureFilePath
                             
                             StorageManager.shared.uploadImage(with: data, to: N.Dirs.imageDir, fileName: filepath) { (result) in
-                                
                                 DispatchQueue.main.async {
                                     strongSelf.spinner.dismiss(afterDelay: 0.5, animated: true)
                                     Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { (t) in

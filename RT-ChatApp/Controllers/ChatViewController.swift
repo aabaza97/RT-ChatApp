@@ -37,7 +37,7 @@ class ChatViewController: MessagesViewController {
     public var appUser: User!
     public var otherUser: User!
     public var isNewConversation: Bool!
-    public var conversation: Conversation? = nil
+    public var conversation: Conversation!
     
     
     //MARK: -Overrides
@@ -69,7 +69,7 @@ class ChatViewController: MessagesViewController {
             switch result {
             case.failure(_):
                 break
-            case.success(let messages):
+            case.success(_):
                 
                 break
             }
@@ -113,9 +113,25 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
         
         if isNewConversation {
             let conversationMembers = [appUser, otherUser]
-            
-            DbManager.shared.createNewConversation(between: conversationMembers, with: message) { (result) in
+            DbManager.shared.createNewConversation(between: conversationMembers, with: message) { [weak self] (result) in
+                guard let strongSelf = self else {
+                    return
+                }
                 switch result {
+                case .failure(_):
+                    print("failed to send Message")
+                    break
+                case .success(let conversationData):
+                    strongSelf.conversation = conversationData
+                    print("Added: \(conversationData.conversationId)")
+                    break
+                }
+            }
+        } else {
+            let conversationId = self.conversation.conversationId
+            message.setConversationId(from: conversationId)
+            DbManager.shared.sendMessage(from: message) { (Result) in
+                switch Result {
                 case .failure(_):
                     print("failed to send Message")
                     break
@@ -124,9 +140,6 @@ extension ChatViewController: InputBarAccessoryViewDelegate {
                     break
                 }
             }
-            
-        } else {
-            // append to an existing conversation
         }
         
         

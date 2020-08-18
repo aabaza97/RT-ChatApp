@@ -28,6 +28,13 @@ final class DbManager {
         case FailedToFetchConversations
         case FailedToCreateConversation
         case FailedToUpdate
+        case NoConversations
+        case NoMessages
+    }
+    
+    
+    public func getProfilePictureFileName(from email: String) -> String {
+        return "profile_pirctures/\(email).png"
     }
 }
 
@@ -64,9 +71,6 @@ extension DbManager {
         } catch let err {
             print(err)
         }
-    }
-    public func getProfilePictureFileName(from email: String) -> String {
-        return "profile_pirctures/\(email).png"
     }
     
     ///Completion: Array of User Objects
@@ -114,14 +118,15 @@ extension DbManager {
 //MARK: -Conversations Manager
 extension DbManager {
     
+    public typealias createConversationHandler = (Result<Conversation, Error>) -> Void
     public typealias messageSendingHandler = (Result<DocumentReference, Error>) -> Void
     public typealias fetchConversationsHandler = (Result<[Conversation], Error>) -> Void
     public typealias fetchMessagesHandler = (Result<[CMessage], Error>) -> Void
-    public typealias conversationCheckerHandler = (Bool) -> Void
+    public typealias conversationCheckerHandler = (Result<[String: Any], Error>) -> Void
     public typealias updateHandler = (Bool) -> Void
     
     ///creates new conversation between 2 users
-    func createNewConversation(between users: [User], with message: CMessage, completion: @escaping messageSendingHandler) -> Void {
+    func createNewConversation(between users: [User], with message: CMessage, completion: @escaping createConversationHandler) -> Void {
         
         /*
          1- create new conversation
@@ -133,7 +138,7 @@ extension DbManager {
         let ids = "\(users[0].userId)_\(users[1].userId)"
         let reverseIds = "\(users[1].userId)_\(users[0].userId)"
         let usersIds = [users[1].userId, users[0].userId]
-        let conversation = Conversation(id: docRef.documentID, users: usersIds, idsCombination: [ids, reverseIds])
+        let conversation = Conversation(id: docRef.documentID, users: usersIds, idsCombination: [ids, reverseIds], usersData: users, messageContent: message.getMessageContent())
         
         do {
             try docRef.setData(from: conversation) { [weak self](error) in
@@ -146,14 +151,8 @@ extension DbManager {
                 
                 self?.sendMessage(from: message) { (result) in
                     switch result {
-                    case .success(let messageRef ):
-                        self?.updateLatestMessage(in: conversation.conversationId, with: messageRef, completion: { (updated) in
-                            if updated {
-                                completion(.success(messageRef))
-                            } else {
-                                completion(.failure(DBManagerErrors.FailedToCreateConversation))
-                            }
-                        })
+                    case .success(_):
+                        completion(.success(conversation))
                         break
                     case .failure(_):
                         completion(.failure(DBManagerErrors.FailedToCreateConversation))
@@ -171,12 +170,20 @@ extension DbManager {
     func sendMessage(from message: CMessage, completion: @escaping messageSendingHandler) -> Void {
         let docRef = db.collection("messages").document()
         message.setMessageId(from: docRef.documentID)
+        
         do {
-            try docRef.setData(from: message, completion: { error in
+            try docRef.setData(from: message, completion: { [weak self] error in
                 guard error == nil else {
                     completion(.failure(DBManagerErrors.FailedToSendMessage))
                     return
                 }
+                self?.updateLatestMessage(in: message.getConversationId(), with: docRef, messageContent: message.getMessageContent(), completion: { (updated) in
+                    if updated {
+                        completion(.success(docRef))
+                    } else {
+                        completion(.failure(DBManagerErrors.FailedToUpdate))
+                    }
+                })
                 
                 completion(.success(docRef))
             })
@@ -187,20 +194,28 @@ extension DbManager {
     
     
     ///fetches all conversations of a user
-    func fetchConversation(for user: User, completion: @escaping fetchConversationsHandler) -> Void {
+    func fetchConversations(for user: User, completion: @escaping fetchConversationsHandler) -> Void {
         let colRef = db.collection("conversations")
-        colRef.whereField("betweenUsers", arrayContains: user.userId).getDocuments { (snapshot, error) in
+        colRef.whereField("betweenUsers", arrayContains: user.userId).addSnapshotListener { (snapshot, error) in
             guard let docs = snapshot?.documents else {
                 completion(.failure(DBManagerErrors.FailedToFetchConversations))
                 return
             }
             var conversations = [Conversation]()
             for doc in docs {
+                var usersData: [User] = [User]()
                 let data = doc.data()
+                let conversationUsers = data["usersData"] as! [[String: Any]]
+                for userObject in conversationUsers {
+                    let user = User(userId: userObject["userId"] as! String, username: userObject["username"] as! String, email: userObject["email"] as! String)
+                    usersData.append(user)
+                }
                 let conversation = Conversation(id: data["conversationId"] as! String,
                                                 users: data["betweenUsers"] as! [String],
-                                                message: data["latestMessage"] as! DocumentReference,
-                                                idsCombination: data["combinedUsers"] as! [String])
+                                                message: data["latestMessageRef"] as! DocumentReference,
+                                                idsCombination: data["combinedUsers"] as! [String],
+                                                usersData: usersData,
+                                                messageContent: data["latestMessageContent"] as! String)
                 conversations.append(conversation)
             }
             
@@ -212,25 +227,26 @@ extension DbManager {
     ///fetches all messages of a conversation using its ID
     func fetchConversationMessages(for conversation: String, completion: @escaping fetchMessagesHandler) -> Void {
         let colRef = db.collection("messages")
-        colRef.whereField("conversationId", isEqualTo: conversation).getDocuments { (snapshot, error) in
-            guard let docs = snapshot?.documents else {
-                completion(.failure(DBManagerErrors.FailedToFetchMessage))
-                return
-            }
-            var messages = [CMessage]()
-            for doc in docs {
-                let data = doc.data()
-                let message = CMessage(id: data["messageId"] as! String,
-                                       conversationId: data["conversationId"] as! String,
-                                       senderId : data["senderId"] as! String,
-                                       receiverId: data["receiverId"] as! String,
-                                       date: data["date"] as! Date,
-                                       isRead: data["isRead"] as! Bool,
-                                       type: data["type"] as! String,
-                                       content: data["content"] as! String)
-                messages.append(message)
-            }
-            
+        colRef.whereField("conversationId", isEqualTo: conversation)
+            .order(by: "date", descending: false).getDocuments { (snapshot, error) in
+                guard let docs = snapshot?.documents else {
+                    completion(.failure(DBManagerErrors.FailedToFetchMessage))
+                    return
+                }
+                var messages = [CMessage]()
+                for doc in docs {
+                    let data = doc.data()
+                    let message = CMessage(id: data["messageId"] as! String,
+                                           conversationId: data["conversationId"] as! String,
+                                           senderId : data["senderId"] as! String,
+                                           receiverId: data["receiverId"] as! String,
+                                           date: data["date"] as! Date,
+                                           isRead: data["isRead"] as! Bool,
+                                           type: data["type"] as! String,
+                                           content: data["content"] as! String)
+                    messages.append(message)
+                }
+                
             completion(.success(messages))
         }
         
@@ -245,22 +261,24 @@ extension DbManager {
         colRef.whereField("combinedUsers", arrayContainsAny: [ids, reversedIds])
             .getDocuments { (snapshot, error) in
                 guard let snap = snapshot else {
-                    completion(false)
+                    completion(.failure(DBManagerErrors.NoConversations))
                     return
                 }
                 if snap.count > 0 {
-                    completion(true)
+                    let result = (snap.documents)[0].data()
+                    completion(.success(result))
                 } else {
-                    completion(false)
+                    completion(.failure(DBManagerErrors.NoConversations))
                 }
         }
     }
     
     
     ///Updates Latest message in a conversation
-    func updateLatestMessage(in conversation: String, with message: DocumentReference, completion: @escaping updateHandler) -> Void {
+    func updateLatestMessage(in conversation: String, with messageRef: DocumentReference, messageContent: String, completion: @escaping updateHandler) -> Void {
         let docRef = db.collection("conversations").document(conversation)
-        docRef.updateData(["latestMessage" : message]) { (error) in
+        docRef.updateData(["latestMessageRef" : messageRef,
+                           "latestMessageContent" : messageContent]) { (error) in
             guard error == nil else {
                 completion(false)
                 return

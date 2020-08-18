@@ -15,13 +15,16 @@ class ConversationsViewController: UIViewController {
 
     //MARK: -Properties
     var appUser: User!
+    var isLoggedIn: Bool = false
+    var conversations: [Conversation] = [Conversation]()
     
     
     //MARK: -Interface Elements
     private let tableView: UITableView = {
         let table = UITableView()
         table.isHidden = true
-        table.register(UITableViewCell.self, forCellReuseIdentifier: "cell")
+//        table.register(ConversationTableViewCell.self, forCellReuseIdentifier: ConversationTableViewCell.cellId)
+        table.register(ConversationTableViewCell.self, forCellReuseIdentifier: ConversationTableViewCell.cellId)
         return table
     }()
     
@@ -42,19 +45,28 @@ class ConversationsViewController: UIViewController {
     //MARK: -Overrides
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        isLoggedIn = getLoginStatus()
         configureViewController()
+        
     }
     
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if !isLoggedIn() {
+        if !getLoginStatus() {
             launchLogin()
         } else {
-            // get user
-            // load conversations
+            getUser { [weak self](result) in
+                switch result {
+                case.failure(_):
+                    break
+                case.success(let user):
+                    self?.appUser = user
+                    self?.fetchConversations()
+                    break
+                }
+            }
         }
     }
     
@@ -75,27 +87,30 @@ class ConversationsViewController: UIViewController {
     }
     
     //MARK: -Functions
-    private func isLoggedIn() -> Bool {
+    private func getLoginStatus() -> Bool {
         if FirebaseAuth.Auth.auth().currentUser == nil {
             return false
         }
-        
-        let appUserId = UserDefaults.standard.value(forKey: "userId") as? String
-        if let appUserId = appUserId {
-            DbManager.shared.getUser(from: appUserId) { [weak self] (result) in
-                switch result {
-                case .success(let user):
-                    self?.appUser = user
-                    break
-                case .failure(_):
-                    self?.launchLogin()
-                    break
-                }
-            }
-        } else {
-            return false
-        }
         return true
+    }
+    
+    private func getUser(completion: @escaping (Result<User, Error>) -> Void) -> Void {
+        let appUserId = UserDefaults.standard.string(forKey: "userId")
+        guard let userId = appUserId else {
+            return
+        }
+        
+        DbManager.shared.getUser(from: userId) {(result) in
+            switch result {
+            case .success(let user):
+                completion(.success(user))
+                break
+            case .failure(_):
+                completion(.failure(DbManager.DBManagerErrors.NoUserWithProvidedId))
+                print("found no user.....")
+                break
+            }
+        }
     }
     
     private func configureViewController() {
@@ -132,7 +147,7 @@ class ConversationsViewController: UIViewController {
     }
     
     
-    private func openChat(user: User? = nil, stateOf newConversation: Bool = false) {
+    private func openChat(for user: User? = nil, stateOf newConversation: Bool = false) {
         guard let user = user else {
             return
         }
@@ -147,6 +162,34 @@ class ConversationsViewController: UIViewController {
     }
     
     
+    private func fetchConversations(){
+        DbManager.shared.fetchConversations(for: appUser) {[weak self] (result) in
+            switch result {
+            case .success(let data):
+                guard !data.isEmpty else {
+                    return
+                }
+                self?.conversations = data
+                DispatchQueue.main.async {
+                    self?.tableView.reloadData()
+                }
+                break
+            case.failure(_):
+                print("no data was fetched")
+                break
+            }
+        }
+    }
+    
+    
+    private func getOtherUser(from users: [User]) -> User{
+        var otherUser: User = users[0]
+        if (otherUser.userId == appUser.userId) {
+            otherUser = users[1]
+        }
+        return otherUser
+    }
+    
     //MARK: -Objc Functions
     
     
@@ -157,20 +200,25 @@ class ConversationsViewController: UIViewController {
 // MARK: -Extensions
 extension ConversationsViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 1
+        return conversations.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        cell.textLabel?.text = "Hello World"
+        let cell = tableView.dequeueReusableCell(withIdentifier: ConversationTableViewCell.cellId, for: indexPath) as! ConversationTableViewCell
+        cell.conversation = conversations[indexPath.row]
+        cell.otherUser = getOtherUser(from: conversations[indexPath.row].usersData)
         return cell
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //        let dummyUser = User(userId: "id", username: "username", email: "email@mail.com")
         tableView.deselectRow(at: indexPath, animated: true)
-        
-        let dummyUser = User(userId: "id", username: "username", email: "email@mail.com")
-        openChat(user: dummyUser)
+        let otherUser = getOtherUser(from: conversations[indexPath.row].usersData)
+        openChat(for: otherUser)
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 120
     }
 }
 
@@ -186,8 +234,15 @@ extension ConversationsViewController: ConversationDelegate {
         var conversationMembers = [User]()
         conversationMembers.append(user)
         conversationMembers.append(appUser)
-        DbManager.shared.doesConversationExist(between: conversationMembers) { [weak self] (exists) in
-                self?.openChat(user: user, stateOf: !exists)
+        DbManager.shared.doesConversationExist(between: conversationMembers) { [weak self] (result) in
+            switch result {
+            case.success(_):
+                self?.openChat(for: user, stateOf: false)
+                break
+            case.failure(_):
+                self?.openChat(for: user, stateOf: true)
+                break
+            }
         }
     }
     
